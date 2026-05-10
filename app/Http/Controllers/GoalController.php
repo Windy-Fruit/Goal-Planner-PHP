@@ -13,7 +13,7 @@ class GoalController extends Controller
     // получить все цели
     public function index(Request $request)
     {
-        $query = Goal::with('tasks');
+        $query = Goal::with(['tasks', 'category']);
 
         // фильтрация
         if ($request->has('status')) {
@@ -61,7 +61,7 @@ class GoalController extends Controller
     public function show(string $id)
     {
         return response()->json(
-            Goal::with('tasks')->findOrFail($id)
+            Goal::with(['tasks', 'category'])->findOrFail($id)
         );
     }
 

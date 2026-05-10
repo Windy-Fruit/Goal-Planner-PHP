@@ -14,11 +14,17 @@ class Goal extends Model
         'title',
         'description',
         'deadline',
-        'status'
+        'status',
+        'category_id'
     ];
 
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }
