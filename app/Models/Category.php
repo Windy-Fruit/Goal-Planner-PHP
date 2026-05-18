@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Category extends Model
 {
     protected $fillable = [
-        'name'
+        'name',
     ];
 
-    public function goals()
+    public function goals(): BelongsToMany
     {
-        return $this->hasMany(Goal::class);
+        return $this->belongsToMany(Goal::class, 'goal_category');
     }
 }
