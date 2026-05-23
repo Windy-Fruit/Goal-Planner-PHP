@@ -10,7 +10,14 @@ class Task extends Model
     protected $fillable = [
         'goal_id',
         'title',
-        'is_done'
+        'description',
+        'due_date',
+        'is_completed',
+    ];
+
+    protected $casts = [
+        'is_completed' => 'boolean',
+        'due_date' => 'date',
     ];
 
     public function goal(): BelongsTo
