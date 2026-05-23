@@ -14,10 +14,29 @@ Backend API для проекта Goal Planner, разработанный на 
 
 ---
 
-## Установка проекта
+## Быстрый запуск через Docker (рекомендуется)
+
+Требуется только установленный **Docker Desktop**.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Windy-Fruit/Goal-Planner-PHP.git
+cd Goal-Planner-PHP
+docker compose up --build
+```
+
+После сборки (первый раз ~3-5 минут) проект будет доступен:
+
+- API: `http://localhost:8000/api/...`
+- Демо-страница для проверки: `http://localhost:8000/demo.html`
+
+Чтобы остановить — Ctrl+C в терминале, либо `docker compose down`.
+
+---
+
+## Установка вручную (без Docker)
+
+```bash
+git clone https://github.com/Windy-Fruit/Goal-Planner-PHP.git
 cd Goal-Planner-PHP
 composer install
 cp .env.example .env

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Goal Planner — демо API</title>
+<style>
+  * { box-sizing: border-box; font-family: -apple-system, "Segoe UI", sans-serif; }
+  body { margin: 0; background: #f3f4f6; color: #111; }
+  .wrap { max-width: 1200px; margin: 20px auto; padding: 0 16px; display: grid; grid-template-columns: 400px 1fr; gap: 16px; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin: 0 0 14px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .card h2 { font-size: 14px; margin: 0 0 10px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px; }
+  label { display: block; font-size: 12px; color: #6b7280; margin: 8px 0 4px; }
+  input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+  button { background: #2563eb; color: white; border: 0; padding: 8px 14px; border-radius: 6px; font-size: 14px; cursor: pointer; margin-top: 8px; margin-right: 6px; }
+  button:hover { background: #1d4ed8; }
+  button.danger { background: #dc2626; }
+  button.danger:hover { background: #b91c1c; }
+  button.gray { background: #6b7280; }
+  pre { background: #0f172a; color: #d1fae5; padding: 14px; border-radius: 8px; overflow: auto; max-height: 700px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+  .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block; }
+  .status.ok { background: #d1fae5; color: #065f46; }
+  .status.err { background: #fee2e2; color: #991b1b; }
+  .token-row { font-size: 12px; color: #6b7280; word-break: break-all; padding: 6px 8px; background: #f9fafb; border-radius: 4px; margin-top: 6px; }
+  .right-col h2 { font-size: 18px; margin: 0 0 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="left-col">
+    <h1>Goal Planner — демо API</h1>
+    <p class="subtitle">Страница для проверки работы API. Нажимайте кнопки слева — ответы сервера будут появляться справа.</p>
+
+    <div class="card">
+      <h2>1. Вход / регистрация</h2>
+      <label>Email</label>
+      <input id="email" value="demo@test.local">
+      <label>Пароль</label>
+      <input id="password" type="password" value="secret123">
+      <label>Имя (для регистрации)</label>
+      <input id="name" value="Demo User">
+      <div>
+        <button onclick="doLogin()">Войти</button>
+        <button class="gray" onclick="doRegister()">Зарегистрироваться</button>
+      </div>
+      <div class="token-row" id="tokenBox">Токен пока не получен.</div>
+    </div>
+
+    <div class="card">
+      <h2>2. Категории</h2>
+      <label>Название категории</label>
+      <input id="catName" value="Здоровье">
+      <button onclick="createCategory()">Создать категорию</button>
+      <button class="gray" onclick="listCategories()">Список</button>
+    </div>
+
+    <div class="card">
+      <h2>3. Цели</h2>
+      <label>Название цели</label>
+      <input id="goalTitle" value="Пробежать марафон">
+      <label>Описание</label>
+      <input id="goalDesc" value="42 километра">
+      <label>Дедлайн (YYYY-MM-DD)</label>
+      <input id="goalDeadline" value="2026-12-31">
+      <label>ID категорий через запятую (необязательно)</label>
+      <input id="goalCats" value="">
+      <button onclick="createGoal()">Создать цель</button>
+      <button class="gray" onclick="listGoals()">Список целей</button>
+    </div>
+
+    <div class="card">
+      <h2>4. Задачи к цели</h2>
+      <label>ID цели</label>
+      <input id="taskGoalId" value="1">
+      <label>Название задачи</label>
+      <input id="taskTitle" value="Купить кроссовки">
+      <label>Дата выполнения</label>
+      <input id="taskDue" value="2026-06-01">
+      <button onclick="createTask()">Создать задачу</button>
+      <button class="gray" onclick="listTasks()">Все задачи</button>
+    </div>
+
+    <div class="card">
+      <h2>5. Изменение задачи</h2>
+      <label>ID задачи</label>
+      <input id="updTaskId" value="1">
+      <button onclick="markTaskDone()">Отметить выполненной</button>
+      <button class="gray" onclick="markTaskUndone()">Снять выполнение</button>
+      <button class="danger" onclick="deleteTask()">Удалить</button>
+    </div>
+
+    <div class="card">
+      <h2>6. Прогресс цели</h2>
+      <label>ID цели</label>
+      <input id="progGoalId" value="1">
+      <button onclick="getProgress()">Посмотреть прогресс</button>
+    </div>
+
+    <div class="card">
+      <h2>7. Проверка авторизации</h2>
+      <button class="danger" onclick="testNoAuth()">Зайти без токена (должно отказать)</button>
+    </div>
+
+  </div>
+
+  <div class="right-col">
+    <h2>Ответ сервера</h2>
+    <div id="statusLine"></div>
+    <pre id="output">Жми любую кнопку слева — здесь будет ответ.</pre>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.origin + "/api";
+let TOKEN = "";
+
+function setStatus(ok, code, label) {
+  document.getElementById("statusLine").innerHTML =
+    `<span class="status ${ok ? 'ok' : 'err'}">HTTP ${code} — ${label}</span>`;
+}
+
+async function call(method, path, body, useToken = true) {
+  const headers = { "Accept": "application/json" };
+  if (body) headers["Content-Type"] = "application/json";
+  if (useToken && TOKEN) headers["Authorization"] = "Bearer " + TOKEN;
+
+  try {
+    const res = await fetch(BASE + path, {
+      method, headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch { json = text; }
+    setStatus(res.ok, res.status, res.statusText || (res.ok ? "OK" : "Error"));
+    document.getElementById("output").textContent =
+      `${method} ${path}\n\n` + JSON.stringify(json, null, 2);
+    return json;
+  } catch (e) {
+    setStatus(false, "ERR", "Сеть/сервер недоступен");
+    document.getElementById("output").textContent = "Ошибка: " + e.message;
+  }
+}
+
+async function doRegister() {
+  const data = await call("POST", "/register", {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value,
+    password_confirmation: document.getElementById("password").value,
+  }, false);
+  if (data && data.token) {
+    TOKEN = data.token;
+    document.getElementById("tokenBox").textContent = "Токен: " + TOKEN.substring(0, 40) + "...";
+  }
+}
+
+async function doLogin() {
+  const data = await call("POST", "/login", {
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value,
+  }, false);
+  if (data && data.token) {
+    TOKEN = data.token;
+    document.getElementById("tokenBox").textContent = "Токен: " + TOKEN.substring(0, 40) + "...";
+  }
+}
+
+function createCategory() {
+  return call("POST", "/categories", { name: document.getElementById("catName").value });
+}
+function listCategories() { return call("GET", "/categories"); }
+
+function createGoal() {
+  const catsStr = document.getElementById("goalCats").value.trim();
+  const body = {
+    title: document.getElementById("goalTitle").value,
+    description: document.getElementById("goalDesc").value,
+    deadline: document.getElementById("goalDeadline").value,
+    status: "active",
+  };
+  if (catsStr) {
+    body.category_ids = catsStr.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  }
+  return call("POST", "/goals", body);
+}
+function listGoals() { return call("GET", "/goals"); }
+
+function createTask() {
+  return call("POST", "/tasks", {
+    goal_id: parseInt(document.getElementById("taskGoalId").value),
+    title: document.getElementById("taskTitle").value,
+    due_date: document.getElementById("taskDue").value,
+  });
+}
+function listTasks() { return call("GET", "/tasks"); }
+
+function markTaskDone() {
+  return call("PATCH", "/tasks/" + document.getElementById("updTaskId").value, { is_completed: true });
+}
+function markTaskUndone() {
+  return call("PATCH", "/tasks/" + document.getElementById("updTaskId").value, { is_completed: false });
+}
+function deleteTask() {
+  return call("DELETE", "/tasks/" + document.getElementById("updTaskId").value);
+}
+
+function getProgress() {
+  return call("GET", "/goals/" + document.getElementById("progGoalId").value + "/progress");
+}
+
+async function testNoAuth() {
+  const savedToken = TOKEN;
+  TOKEN = "";
+  await call("GET", "/me", null, false);
+  TOKEN = savedToken;
+}
+</script>
+</body>
+</html>
